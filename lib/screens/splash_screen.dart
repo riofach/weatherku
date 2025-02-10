@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../ui/home_page.dart'; // Import halaman HomePage
+import '../ui/home_page.dart';
 import 'package:weather_kita/constants.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -57,14 +57,13 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          const Color(0xFF0C3350), // Warna background splash screen
+      backgroundColor: const Color(0xFF0C3350),
       body: Center(
         child: FadeTransition(
           opacity: _animation,
           child: Image.asset(
-            'assets/logo.png', // logo
-            width: 200, // Ukuran logo
+            'assets/logo.png',
+            width: 200,
             height: 200,
           ),
         ),

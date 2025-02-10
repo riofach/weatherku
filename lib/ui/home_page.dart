@@ -25,7 +25,7 @@ class _HomePageState extends State<HomePage> {
   final Constants constants = Constants();
   final TextEditingController cityController = TextEditingController();
   final NotificationService _notificationService = NotificationService();
-  static String apiKey = '9cee1f7a49b7412abc401732250702';
+  static String apiKey = 'YOUR_API_KEY'; // Pasang API KEY
 
   String location = 'Jakarta'; // default location
   String weatherIcon = 'assets/sunny.png';
@@ -58,7 +58,7 @@ class _HomePageState extends State<HomePage> {
   Future<Position?> getCurrentLocation() async {
     bool hasPermission = await requestLocationPermission();
     if (!hasPermission) {
-      return null; // Izin tidak diberikan
+      return null;
     }
 
     Position position = await Geolocator.getCurrentPosition(
@@ -109,8 +109,7 @@ class _HomePageState extends State<HomePage> {
       print(data);
       setState(() {
         location = data['location']['name'];
-        temperature = data['current']['temp_c']
-            .toInt(); // Pastikan temperature diperbarui
+        temperature = data['current']['temp_c'].toInt();
         windSpeed = data['current']['wind_kph'].toInt();
         humidity = data['current']['humidity'].toInt();
         cloud = data['current']['cloud'].toInt();
@@ -141,7 +140,6 @@ class _HomePageState extends State<HomePage> {
   String getWeatherIcon(String condition) {
     String iconPath =
         'assets/${condition.replaceAll(' ', '').toLowerCase()}.png';
-    // Jika gambar tidak ditemukan, gunakan gambar default
     if (AssetImage(iconPath).evict() == false) {
       return 'assets/sunny.png'; // Gambar default
     }
@@ -161,7 +159,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _initializeNotifications() async {
     await _notificationService.init();
 
-    // Jadwalkan notifikasi setiap jam 6 pagi
+    // notifikasi setiap jam 6 pagi
     await _notificationService.scheduleDailyNotification(
       id: 0,
       title: 'Cuaca Hari Ini',
@@ -217,12 +215,12 @@ class _HomePageState extends State<HomePage> {
                   // Icon Menu dari Assets
                   IconButton(
                     icon: Image.asset(
-                      'assets/menu.png', // Ganti dengan path gambar menu Anda
-                      width: 24, // Sesuaikan ukuran gambar
+                      'assets/menu.png',
+                      width: 24,
                       height: 24,
                     ),
                     onPressed: () {
-                      // Tambahkan fungsi untuk menu di sini
+                      // Fungsi untuk menu di sini
                     },
                   ),
                   // Lokasi dan Dropdown
@@ -316,7 +314,6 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
-                  // Foto Profile dengan Jarak
                   Padding(
                     padding: const EdgeInsets.only(
                         right: 10), // Tambahkan jarak di sebelah kanan
