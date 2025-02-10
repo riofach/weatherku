@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:http/http.dart' as http;
@@ -10,6 +11,8 @@ import 'package:shimmer/shimmer.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:timezone/timezone.dart' as tz;
+import '../services/notification_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,7 +24,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final Constants constants = Constants();
   final TextEditingController cityController = TextEditingController();
-  static String apiKey = 'YOUR_API_KEY';
+  final NotificationService _notificationService = NotificationService();
+  static String apiKey = '9cee1f7a49b7412abc401732250702';
 
   String location = 'Jakarta'; // default location
   String weatherIcon = 'assets/sunny.png';
@@ -139,7 +143,7 @@ class _HomePageState extends State<HomePage> {
         'assets/${condition.replaceAll(' ', '').toLowerCase()}.png';
     // Jika gambar tidak ditemukan, gunakan gambar default
     if (AssetImage(iconPath).evict() == false) {
-      return 'assets/default.png'; // Gambar default
+      return 'assets/sunny.png'; // Gambar default
     }
     return iconPath;
   }
@@ -154,11 +158,46 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _initializeNotifications() async {
+    await _notificationService.init();
+
+    // Jadwalkan notifikasi setiap jam 6 pagi
+    await _notificationService.scheduleDailyNotification(
+      id: 0,
+      title: 'Cuaca Hari Ini',
+      body: 'Jangan lupa cek cuaca hari ini!',
+      time: const TimeOfDay(hour: 6, minute: 0), // Atur waktu notifikasi
+    );
+  }
+
+  // Future<void> showTestNotification() async {
+  //   const AndroidNotificationDetails androidPlatformChannelSpecifics =
+  //       AndroidNotificationDetails(
+  //     'weather_channel',
+  //     'Weather Notifications',
+  //     importance: Importance.max,
+  //     priority: Priority.high,
+  //   );
+
+  //   const NotificationDetails platformChannelSpecifics = NotificationDetails(
+  //     android: androidPlatformChannelSpecifics,
+  //     iOS: DarwinNotificationDetails(),
+  //   );
+
+  //   await _notificationService.flutterLocalNotificationsPlugin.show(
+  //     0,
+  //     'Test Notifikasi',
+  //     'Ini adalah notifikasi tes.',
+  //     platformChannelSpecifics,
+  //   );
+  // }
+
   @override
   void initState() {
     fetchWeather(location);
     super.initState();
     _initializeLocationAndWeather();
+    _initializeNotifications();
   }
 
   @override
@@ -294,6 +333,14 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
               const SizedBox(height: 20),
+
+              // button test notification
+              // Center(
+              //   child: ElevatedButton(
+              //     onPressed: showTestNotification,
+              //     child: const Text('Test Notification'),
+              //   ),
+              // ),
 
               // Weather Icon and Temperature
               isLoading
