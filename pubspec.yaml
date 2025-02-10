@@ -40,6 +40,8 @@ dependencies:
   modal_bottom_sheet: ^3.0.0
   animated_text_kit: ^4.2.3
   shimmer: ^3.0.0
+  geolocator: ^13.0.2
+  permission_handler: ^11.3.1
 
 dev_dependencies:
   flutter_test:
@@ -95,5 +97,5 @@ flutter:
 flutter_launcher_icons:
   android: 'launcher_icon'
   ios: true
-  image_path: 'assets/icon.png'
+  image_path: 'assets/logo.png'
   min_sdk_android: 21

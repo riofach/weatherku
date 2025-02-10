@@ -8,6 +8,8 @@ import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:weather_kita/constants.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:geolocator/geolocator.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -19,7 +21,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final Constants constants = Constants();
   final TextEditingController cityController = TextEditingController();
-  static String apiKey = '9cee1f7a49b7412abc401732250702';
+  static String apiKey = 'YOUR_API_KEY';
 
   String location = 'Jakarta'; // default location
   String weatherIcon = 'assets/sunny.png';
@@ -40,14 +42,71 @@ class _HomePageState extends State<HomePage> {
   String searchWeatherURL =
       'http://api.weatherapi.com/v1/forecast.json?key=$apiKey&days=7&q=';
 
+  Future<bool> requestLocationPermission() async {
+    var status = await Permission.location.request();
+    if (status.isGranted) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  Future<Position?> getCurrentLocation() async {
+    bool hasPermission = await requestLocationPermission();
+    if (!hasPermission) {
+      return null; // Izin tidak diberikan
+    }
+
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+    return position;
+  }
+
+  Future<void> fetchWeatherByLocation(double lat, double lon) async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      var response = await http.get(Uri.parse('$searchWeatherURL$lat,$lon'));
+      var data = jsonDecode(response.body);
+      print(data);
+
+      setState(() {
+        location = data['location']['name'];
+        temperature = data['current']['temp_c'].toInt();
+        windSpeed = data['current']['wind_kph'].toInt();
+        humidity = data['current']['humidity'].toInt();
+        cloud = data['current']['cloud'].toInt();
+        currentWeatherStatus = data['current']['condition']['text'];
+        weatherIcon = getWeatherIcon(currentWeatherStatus);
+        var parseDate = DateTime.parse(data['location']['localtime']);
+        currentDate = DateFormat('EEEE, d MMMM y').format(parseDate);
+        hourlyForecast = data['forecast']['forecastday'][0]['hour'];
+        dailyForecast = data['forecast']['forecastday'];
+        isLoading = false;
+      });
+    } catch (e) {
+      print(e);
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
   Future<void> fetchWeather(String searchText) async {
+    setState(() {
+      isLoading = true; // Tampilkan shimmer saat memuat data
+    });
     try {
       var response = await http.get(Uri.parse(searchWeatherURL + searchText));
       var data = jsonDecode(response.body);
       print(data);
       setState(() {
         location = data['location']['name'];
-        temperature = data['current']['temp_c'].toInt();
+        temperature = data['current']['temp_c']
+            .toInt(); // Pastikan temperature diperbarui
         windSpeed = data['current']['wind_kph'].toInt();
         humidity = data['current']['humidity'].toInt();
         cloud = data['current']['cloud'].toInt();
@@ -85,25 +144,30 @@ class _HomePageState extends State<HomePage> {
     return iconPath;
   }
 
+  Future<void> _initializeLocationAndWeather() async {
+    Position? position = await getCurrentLocation();
+    if (position != null) {
+      await fetchWeatherByLocation(position.latitude, position.longitude);
+    } else {
+      // Jika izin tidak diberikan atau lokasi tidak ditemukan, gunakan lokasi default
+      await fetchWeather(location);
+    }
+  }
+
   @override
   void initState() {
     fetchWeather(location);
     super.initState();
+    _initializeLocationAndWeather();
   }
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
-        overlays: SystemUiOverlay.values);
-
-    Size size = MediaQuery.of(context).size;
-
     return Scaffold(
       backgroundColor: constants.primaryColor.withOpacity(0.1),
       body: SingleChildScrollView(
         child: Container(
-          padding: const EdgeInsets.only(
-              top: 40, bottom: 20), // Padding di bagian atas
+          padding: const EdgeInsets.only(top: 40, bottom: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -111,11 +175,18 @@ class _HomePageState extends State<HomePage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // Icon Menu dari Assets
                   IconButton(
-                    icon: Icon(Icons.menu,
-                        color: constants.tertiaryColor.withOpacity(0.8)),
-                    onPressed: () {},
+                    icon: Image.asset(
+                      'assets/menu.png', // Ganti dengan path gambar menu Anda
+                      width: 24, // Sesuaikan ukuran gambar
+                      height: 24,
+                    ),
+                    onPressed: () {
+                      // Tambahkan fungsi untuk menu di sini
+                    },
                   ),
+                  // Lokasi dan Dropdown
                   Row(
                     children: [
                       Lottie.asset(
@@ -132,12 +203,12 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       IconButton(
-                        onPressed: () {
+                        onPressed: () async {
                           cityController.clear();
                           showMaterialModalBottomSheet(
                             context: context,
                             builder: (context) => Container(
-                              height: size.height * 0.7, // Modal lebih tinggi
+                              height: MediaQuery.of(context).size.height * 0.7,
                               padding: const EdgeInsets.symmetric(
                                   vertical: 20, horizontal: 20),
                               decoration: BoxDecoration(
@@ -206,13 +277,18 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Image.asset(
-                      'assets/profile.png',
-                      fit: BoxFit.cover,
-                      width: 40,
-                      height: 40,
+                  // Foto Profile dengan Jarak
+                  Padding(
+                    padding: const EdgeInsets.only(
+                        right: 10), // Tambahkan jarak di sebelah kanan
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.asset(
+                        'assets/profile.jpg', // Ganti dengan path foto profil Anda
+                        fit: BoxFit.cover,
+                        width: 40,
+                        height: 40,
+                      ),
                     ),
                   ),
                 ],

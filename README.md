@@ -1,6 +1,9 @@
-# weather_kita
+# WeatherKu
 
-A new Flutter project.
+Flutter Project for Weather App
+
+- API from [Weather API](https://www.weatherapi.com/)
+- don't forget to add your own API key (home_page.dart) and Flutter pub get (pubspec.yaml)
 
 ## Getting Started
 
